@@ -35,7 +35,8 @@ class OrderController {
     lateinit var stockRepository: StockRepository
 
     fun Order.representation() = OrderRepresentation(id, client.id, client.user.login,
-            manager?.id, manager?.user?.login, status, paymentStatus)
+            manager?.id, manager?.user?.login, status, paymentStatus,
+            listOfProductItemsRepository.findByOrder_Id(id).map { it.product.name to it.number }.toMap())
 
     @PostMapping("/")
     @PreAuthorize("hasAuthority('CLIENT')")

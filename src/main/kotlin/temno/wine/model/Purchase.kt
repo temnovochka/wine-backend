@@ -1,8 +1,9 @@
 package temno.wine.model
 
 import javax.persistence.*
-import javax.validation.constraints.NotBlank
 
+@Entity
+@Table(name = "_purchase")
 data class Purchase(
         @ManyToOne(cascade = [CascadeType.MERGE])
         @JoinColumn(name = "manager_id", referencedColumnName = "id")

@@ -69,7 +69,7 @@ class OrderController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/change/{id}")
     fun change(@AuthenticationPrincipal user: User,
                @PathVariable id: Long,
                @RequestBody orderUpdate: OrderRepresentation): ResponseEntity<*> {
@@ -112,15 +112,17 @@ class OrderController {
     }
 
     @PreAuthorize("hasAuthority('MANAGER')")
-    @GetMapping("/")
-    fun check(@AuthenticationPrincipal user: User) {
+    @PutMapping("/{id}")
+    fun check(@AuthenticationPrincipal user: User,
+              @PathVariable id: Long) {
         val manager = managerRepository.findByUser(user)
                 ?: throw ResourceNotFoundException("Manager", "username", user.login)
-        val orders = orderRepository.findAllByStatus(OrderStatus.IN_PROGRESS)
+        val orders = listOf(orderRepository.findById(id).orElseThrow { ResourceNotFoundException("Order", "order_id", id) })
+        // if (id == null) orderRepository.findAllByStatus(OrderStatus.IN_PROGRESS) else
         for (order in orders) {
-            val prodInOrder = listOfProductItemsRepository.findByOrder(order).map { it.product to it.number }
+            val prodInOrder = listOfProductItemsRepository.findByOrder_Id(order.id).map { it.product to it.number }
             val stock = stockRepository.findAll()
-            val stockProductToNumber = stock.map { it.product to it.number }.toMap()
+            val stockProductToNumber = stock.map { it.product to it.number }.toMap(mutableMapOf())
             val stockAll = stock.map { it.product to it }.toMap()
 
             val newNumberPerProduct = mutableMapOf<Stock, Int>()

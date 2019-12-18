@@ -28,6 +28,12 @@ class PurchaseController {
     @Autowired
     lateinit var listOfProductItemsRepository: ListOfProductItemsRepository
 
+    @Autowired
+    lateinit var stockRepository: StockRepository
+
+    @Autowired
+    lateinit var administratorRepository: AdministratorRepository
+
     fun Purchase.representation() = PurchaseRepresentation(id, administrator?.id, administrator?.user?.login,
             manager.id, manager.user.login, status, supplier, isAddedIntoStock)
 
@@ -55,5 +61,62 @@ class PurchaseController {
         }
         listOfProductItemsRepository.saveAll(productItems)
         return ResponseEntity.ok(purchase.representation())
+    }
+
+    @PutMapping("/{id}")
+    fun change(@AuthenticationPrincipal user: User,
+               @PathVariable id: Long,
+               @RequestBody purchaseUpdate: PurchaseRepresentation): ResponseEntity<*> {
+        val currentPurchase = purchaseRepository.findById(id)
+                .orElseThrow { ResourceNotFoundException("Purchase", "id", id) }
+        when {
+            user.role == UserRole.MANAGER -> {
+                if (currentPurchase.manager.user.id != user.id) {
+                    return ResponseEntity(ApiResponse(false, "Is not possible for you"), HttpStatus.BAD_REQUEST)
+                }
+                if (currentPurchase.status == OrderStatus.DONE && !currentPurchase.isAddedIntoStock) {
+                    when (purchaseUpdate.status to purchaseUpdate.isAddedIntoStock) {
+                        OrderStatus.CLOSED to true -> {
+                            currentPurchase.status = purchaseUpdate.status
+                            currentPurchase.isAddedIntoStock = purchaseUpdate.isAddedIntoStock
+                            val manager = managerRepository.findByUser(user)
+                                    ?: throw ResourceNotFoundException("Manager", "username", user.login)
+
+                            val stockDataForSave = stockRepository.findAll().map { it.product to it }.toMap()
+                            val products = listOfProductItemsRepository.findByPurchase_Id(currentPurchase.id)
+                            for (prod in products) {
+                                when (val currentStock = stockDataForSave[prod.product]) {
+                                    null -> stockRepository.save(Stock(prod.product, prod.number, manager))
+                                    else -> {
+                                        currentStock.number = prod.number + currentStock.number
+                                        currentStock.manager = manager
+                                        stockRepository.save(currentStock)
+                                    }
+                                }
+                            }
+                            currentPurchase.isAddedIntoStock = true
+                        }
+                        else -> return ResponseEntity(ApiResponse(false, "Is not possible to make such changes"),
+                                HttpStatus.BAD_REQUEST)
+                    }
+                }
+                purchaseRepository.save(currentPurchase)
+                return ResponseEntity.ok(currentPurchase.representation())
+            }
+            user.role == UserRole.ADMINISTRATOR -> {
+                currentPurchase.supplier = purchaseUpdate.supplier
+                currentPurchase.administrator = administratorRepository.findByUser(user)
+                        ?: throw ResourceNotFoundException("Administrator", "username", user.login)
+                when (currentPurchase.status to purchaseUpdate.status) {
+                    OrderStatus.NEW to OrderStatus.IN_PROGRESS -> currentPurchase.status = purchaseUpdate.status
+                    OrderStatus.IN_PROGRESS to OrderStatus.DONE -> currentPurchase.status = purchaseUpdate.status
+                    else -> return ResponseEntity(ApiResponse(false, "Is not possible to make such changes"),
+                            HttpStatus.BAD_REQUEST)
+                }
+                purchaseRepository.save(currentPurchase)
+                return ResponseEntity.ok(currentPurchase)
+            }
+            else -> return ResponseEntity(ApiResponse(false, "Is not possible for your role"), HttpStatus.BAD_REQUEST)
+        }
     }
 }

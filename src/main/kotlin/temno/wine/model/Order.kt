@@ -4,7 +4,7 @@ package temno.wine.model
 import javax.persistence.*
 
 enum class OrderStatus {
-    NEW, IN_PROGRESS, DONE, NOT_DONE
+    NEW, IN_PROGRESS, DONE, NOT_DONE, CLOSED
 }
 
 enum class PaymentStatus {

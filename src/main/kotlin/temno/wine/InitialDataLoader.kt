@@ -34,7 +34,7 @@ class InitialDataLoader : ApplicationRunner {
         val savedUser = userRepository.saveAndFlush(user)
         when (role) {
             UserRole.CLIENT -> {
-                clientRepository.saveAndFlush(Client(user = savedUser))
+                clientRepository.saveAndFlush(Client(user = savedUser, isConfirmed = false))
             }
             UserRole.MANAGER -> {
                 managerRepository.saveAndFlush(Manager(user = savedUser))

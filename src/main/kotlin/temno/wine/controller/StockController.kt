@@ -17,7 +17,7 @@ class StockController {
     @Autowired
     lateinit var stockRepository: StockRepository
 
-    fun Stock.representation() = StockRepresentation(product.name, number)
+    fun Stock.representation() = StockRepresentation(id, product.name, number)
 
     @GetMapping("/")
     @PreAuthorize("hasAuthority('MANAGER')")

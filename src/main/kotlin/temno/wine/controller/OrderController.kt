@@ -70,7 +70,7 @@ class OrderController {
         }
     }
 
-    @PutMapping("/change/{id}")
+    @PutMapping("/{id}")
     fun change(@AuthenticationPrincipal user: User,
                @PathVariable id: Long,
                @RequestBody orderUpdate: OrderRepresentation): ResponseEntity<*> {
@@ -113,7 +113,7 @@ class OrderController {
     }
 
     @PreAuthorize("hasAuthority('MANAGER')")
-    @PutMapping("/{id}")
+    @PutMapping("/check/{id}")
     fun check(@AuthenticationPrincipal user: User,
               @PathVariable id: Long) {
         val manager = managerRepository.findByUser(user)

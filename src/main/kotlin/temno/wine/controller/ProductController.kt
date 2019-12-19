@@ -14,7 +14,7 @@ class ProductController {
     @Autowired
     lateinit var productRepository: ProductRepository
 
-    fun Product.representation() = ProductRepresentation(name, features, price)
+    fun Product.representation() = ProductRepresentation(id, name, features, price)
 
     @GetMapping("/")
     fun getProducts(): List<ProductRepresentation> {

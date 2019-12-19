@@ -1,3 +1,3 @@
 package temno.wine.payload
 
-data class StockRepresentation(val name: String, val number: Int)
+data class StockRepresentation(val id: Long, val name: String, val number: Int)

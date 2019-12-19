@@ -36,7 +36,8 @@ class OrderController {
 
     fun Order.representation() = OrderRepresentation(id, client.id, client.user.login,
             manager?.id, manager?.user?.login, status, paymentStatus,
-            listOfProductItemsRepository.findByOrder_Id(id).map { it.product.name to it.number }.toMap())
+            listOfProductItemsRepository.findByOrder_Id(id).map { it.product.name to it.number }.toMap(),
+            listOfProductItemsRepository.findByOrder_Id(id).map { it.product.price * it.number }.sum())
 
     @PostMapping("/")
     @PreAuthorize("hasAuthority('CLIENT')")

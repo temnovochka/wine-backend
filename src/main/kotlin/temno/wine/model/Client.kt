@@ -8,6 +8,7 @@ data class Client(
         var name: String = "",
         var document: String = "",
         var birthday: String = "",
+        var card: String = "",
 
         @ManyToOne(cascade = [CascadeType.MERGE])
         @JoinColumn(name = "user_id", referencedColumnName = "id")

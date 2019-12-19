@@ -27,6 +27,7 @@ class ClientController {
             user.role,
             name,
             document,
+            card,
             birthday,
             user.email,
             isConfirmed

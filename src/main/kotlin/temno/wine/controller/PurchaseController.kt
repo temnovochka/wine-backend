@@ -35,7 +35,8 @@ class PurchaseController {
     lateinit var administratorRepository: AdministratorRepository
 
     fun Purchase.representation() = PurchaseRepresentation(id, administrator?.id, administrator?.user?.login,
-            manager.id, manager.user.login, status, supplier, isAddedIntoStock)
+            manager.id, manager.user.login, status, supplier, isAddedIntoStock,
+            listOfProductItemsRepository.findByPurchase_Id(id).map { it.product.name to it.number }.toMap())
 
     @GetMapping("/")
     fun list(@AuthenticationPrincipal user: User): ResponseEntity<*> {

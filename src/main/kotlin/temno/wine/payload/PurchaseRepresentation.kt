@@ -7,4 +7,5 @@ data class PurchaseRepresentation(val id: Long,
                                   val managerId: Long, val managerLogin: String?,
                                   val status: OrderStatus,
                                   val supplier: String?,
-                                  val isAddedIntoStock: Boolean)
+                                  val isAddedIntoStock: Boolean,
+                                  val products: Map<String, Int>)

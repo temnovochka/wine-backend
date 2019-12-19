@@ -45,6 +45,9 @@ class OrderController {
     fun create(@RequestBody orderPayload: OrderPayload, @AuthenticationPrincipal user: User): ResponseEntity<*> {
         val client = clientRepository.findByUserLogin(user.login)
                 .orElseThrow { ResourceNotFoundException("User", "username", user.login) }
+        if (!client.isConfirmed) {
+            return ResponseEntity(ApiResponse(false, "Is not possible for unconfirmed clients"), HttpStatus.BAD_REQUEST)
+        }
         var order = Order(client, null, OrderStatus.NEW, PaymentStatus.NOT_PAID)
         order = orderRepository.save(order)
         val productItems = orderPayload.products.map {

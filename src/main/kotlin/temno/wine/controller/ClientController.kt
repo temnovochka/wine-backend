@@ -55,6 +55,7 @@ class ClientController {
                 client.name = updatedProfile.name
                 client.document = updatedProfile.document
                 client.birthday = updatedProfile.birthday
+                client.card = updatedProfile.card
             }
             currentUser.role == UserRole.MANAGER -> {
                 client.isConfirmed = updatedProfile.isConfirmed

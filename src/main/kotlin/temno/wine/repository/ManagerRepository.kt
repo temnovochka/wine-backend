@@ -6,4 +6,5 @@ import temno.wine.model.User
 
 interface ManagerRepository : JpaRepository<Manager, Long> {
     fun findByUser(user: User): Manager?
+    fun findByUserLogin(login: String): Manager?
 }

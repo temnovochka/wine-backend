@@ -53,6 +53,10 @@ class PurchaseController {
                @AuthenticationPrincipal user: User): ResponseEntity<*> {
         val manager = managerRepository.findByUser(user)
                 ?: throw ResourceNotFoundException("Manager", "username", user.login)
+
+        if (purchasePayload.products.isEmpty()) {
+            return ResponseEntity(ApiResponse(false, "Add something in your purchase"), HttpStatus.BAD_REQUEST)
+        }
         var purchase = Purchase(manager, null, null, OrderStatus.NEW, false)
         purchase = purchaseRepository.save(purchase)
         val productItems = purchasePayload.products.map {

@@ -110,7 +110,9 @@ class PurchaseController {
                         ?: throw ResourceNotFoundException("Administrator", "username", user.login)
                 when (currentPurchase.status to purchaseUpdate.status) {
                     OrderStatus.NEW to OrderStatus.IN_PROGRESS -> currentPurchase.status = purchaseUpdate.status
+                    OrderStatus.IN_PROGRESS to OrderStatus.IN_PROGRESS -> currentPurchase.status = purchaseUpdate.status
                     OrderStatus.IN_PROGRESS to OrderStatus.DONE -> currentPurchase.status = purchaseUpdate.status
+                    OrderStatus.IN_PROGRESS to OrderStatus.NOT_DONE -> currentPurchase.status = purchaseUpdate.status
                     else -> return ResponseEntity(ApiResponse(false, "Is not possible to make such changes"),
                             HttpStatus.BAD_REQUEST)
                 }

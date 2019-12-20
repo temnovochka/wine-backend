@@ -108,7 +108,15 @@ class OrderController {
                     }
                     OrderStatus.IN_PROGRESS to OrderStatus.DONE -> currentOrder.status = orderUpdate.status
                     OrderStatus.IN_PROGRESS to OrderStatus.NOT_DONE -> currentOrder.status = orderUpdate.status
-                    else -> return ResponseEntity(ApiResponse(false, "It is not possible"), HttpStatus.BAD_REQUEST)
+                    else -> {
+                        if (orderUpdate.status == OrderStatus.CLOSED
+                                && !(orderUpdate.status == OrderStatus.DONE
+                                        && orderUpdate.paymentStatus == PaymentStatus.NOT_PAID)) {
+                            currentOrder.status = orderUpdate.status
+                        } else {
+                            return ResponseEntity(ApiResponse(false, "It is not possible"), HttpStatus.BAD_REQUEST)
+                        }
+                    }
                 }
                 orderRepository.save(currentOrder)
                 return ResponseEntity.ok(currentOrder.representation())
@@ -123,40 +131,37 @@ class OrderController {
               @PathVariable id: Long) {
         val manager = managerRepository.findByUser(user)
                 ?: throw ResourceNotFoundException("Manager", "username", user.login)
-        val orders = listOf(orderRepository.findById(id).orElseThrow { ResourceNotFoundException("Order", "order_id", id) })
-        // if (id == null) orderRepository.findAllByStatus(OrderStatus.IN_PROGRESS) else
-        for (order in orders) {
-            val prodInOrder = listOfProductItemsRepository.findByOrder_Id(order.id).map { it.product to it.number }
-            val stock = stockRepository.findAll()
-            val stockProductToNumber = stock.map { it.product to it.number }.toMap(mutableMapOf())
-            val stockAll = stock.map { it.product to it }.toMap()
+        val order = orderRepository.findById(id).orElseThrow { ResourceNotFoundException("Order", "order_id", id) }
+        val prodInOrder = listOfProductItemsRepository.findByOrder_Id(order.id).map { it.product to it.number }
+        val stock = stockRepository.findAll()
+        val stockProductToNumber = stock.map { it.product to it.number }.toMap(mutableMapOf())
+        val stockAll = stock.map { it.product to it }.toMap()
 
-            val newNumberPerProduct = mutableMapOf<Stock, Int>()
-            var isNotEnough = false
+        val newNumberPerProduct = mutableMapOf<Stock, Int>()
+        var isNotEnough = false
 
-            for ((prod, num) in prodInOrder) {
-                if (num <= stockProductToNumber.getOrDefault(prod, 0)) {
-                    val st = stockAll.getValue(prod)
-                    newNumberPerProduct[st] = st.number - num
-                } else {
-                    isNotEnough = true
-                    break
-                }
-            }
-
-            when (isNotEnough) {
-                true -> order.status = OrderStatus.NOT_DONE
-                else -> {
-                    order.status = OrderStatus.DONE
-
-                    for ((oneStock, num) in newNumberPerProduct) {
-                        oneStock.number = num
-                        oneStock.manager = manager
-                    }
-                    stockRepository.saveAll(newNumberPerProduct.keys)
-                }
+        for ((prod, num) in prodInOrder) {
+            if (num <= stockProductToNumber.getOrDefault(prod, 0)) {
+                val st = stockAll.getValue(prod)
+                newNumberPerProduct[st] = st.number - num
+            } else {
+                isNotEnough = true
+                break
             }
         }
-        orderRepository.saveAll(orders)
+
+        when (isNotEnough) {
+            true -> order.status = OrderStatus.NOT_DONE
+            else -> {
+                order.status = OrderStatus.DONE
+
+                for ((oneStock, num) in newNumberPerProduct) {
+                    oneStock.number = num
+                    oneStock.manager = manager
+                }
+                stockRepository.saveAll(newNumberPerProduct.keys)
+            }
+        }
+        orderRepository.save(order)
     }
 }

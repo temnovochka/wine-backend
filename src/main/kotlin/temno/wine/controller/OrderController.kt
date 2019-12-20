@@ -48,6 +48,9 @@ class OrderController {
         if (!client.isConfirmed) {
             return ResponseEntity(ApiResponse(false, "Is not possible for unconfirmed clients"), HttpStatus.BAD_REQUEST)
         }
+        if (orderPayload.products.isEmpty()) {
+            return ResponseEntity(ApiResponse(false, "Add something in your order"), HttpStatus.BAD_REQUEST)
+        }
         var order = Order(client, null, OrderStatus.NEW, PaymentStatus.NOT_PAID)
         order = orderRepository.save(order)
         val productItems = orderPayload.products.map {

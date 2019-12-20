@@ -118,7 +118,8 @@ class PurchaseController {
                             HttpStatus.BAD_REQUEST)
                 }
                 purchaseRepository.save(currentPurchase)
-                return ResponseEntity.ok(currentPurchase)
+                // tmp solution
+                return ResponseEntity("", HttpStatus.OK)
             }
             else -> return ResponseEntity(ApiResponse(false, "Is not possible for your role"), HttpStatus.BAD_REQUEST)
         }

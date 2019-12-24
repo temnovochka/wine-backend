@@ -25,7 +25,7 @@ class AdministratorController {
 
     @GetMapping("/{login}")
     fun getProfile(@PathVariable login: String, @AuthenticationPrincipal currentUser: User): ResponseEntity<*> {
-        val admin = administratorRepository.findByUserLogin(login)
+        val admin = administratorRepository.findByUserLoginAndDeleted(login, false)
                 ?: throw ResourceNotFoundException("User", "username", login)
         if (admin.user.id != currentUser.id) {
             return ResponseEntity(ApiResponse(false, "No permission"), HttpStatus.UNAUTHORIZED)

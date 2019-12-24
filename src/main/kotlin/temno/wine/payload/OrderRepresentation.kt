@@ -10,4 +10,5 @@ data class OrderRepresentation(val id: Long,
                                val status: OrderStatus, val paymentStatus: PaymentStatus,
                                val products: Map<String, Int>,
                                val price: Double,
-                               val clientCard: String)
+                               val clientCard: String,
+                               val clientDeleted: Boolean)

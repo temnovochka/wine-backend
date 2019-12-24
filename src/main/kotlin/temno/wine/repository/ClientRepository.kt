@@ -5,5 +5,6 @@ import temno.wine.model.Client
 import java.util.*
 
 interface ClientRepository : JpaRepository<Client, Long> {
-    fun findByUserLogin(login: String): Optional<Client>
+    fun findByUserLoginAndDeleted(login: String, deleted: Boolean): Client?
+    fun findByDeleted(deleted: Boolean): Optional<List<Client>>
 }

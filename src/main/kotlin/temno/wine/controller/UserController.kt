@@ -48,9 +48,18 @@ class UserController {
         val user = userRepository.findByLogin(login)
                 .orElseThrow { ResourceNotFoundException("User", "username", login) }
         user.role = updateInfo.role
-        clientRepository.findByUserLogin(user.login).ifPresent { clientRepository.delete(it) }
-        managerRepository.findByUserLogin(user.login)?.let { managerRepository.delete(it) }
-        administratorRepository.findByUserLogin(user.login)?.let { administratorRepository.delete(it) }
+        clientRepository.findByUserLoginAndDeleted(user.login, false)?.let {
+            it.deleted = true
+            clientRepository.save(it)
+        }
+        managerRepository.findByUserLoginAndDeleted(user.login, false)?.let {
+            it.deleted = true
+            managerRepository.save(it)
+        }
+        administratorRepository.findByUserLoginAndDeleted(user.login, false)?.let {
+            it.deleted = true
+            administratorRepository.save(it)
+        }
         val savedUser = userRepository.save(user)
         when (updateInfo.role) {
             UserRole.CLIENT -> {

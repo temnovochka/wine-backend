@@ -14,7 +14,8 @@ data class Client(
         @JoinColumn(name = "user_id", referencedColumnName = "id")
         val user: User,
 
-        var isConfirmed: Boolean = false
+        var isConfirmed: Boolean = false,
+        var deleted: Boolean = false
 
 ) : ModelWithTimestamp() {
     @Id

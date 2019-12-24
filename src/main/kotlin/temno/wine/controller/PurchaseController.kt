@@ -51,7 +51,7 @@ class PurchaseController {
     @PreAuthorize("hasAuthority('MANAGER')")
     fun create(@RequestBody purchasePayload: PurchasePayload,
                @AuthenticationPrincipal user: User): ResponseEntity<*> {
-        val manager = managerRepository.findByUser(user)
+        val manager = managerRepository.findByUserAndDeleted(user, false)
                 ?: throw ResourceNotFoundException("Manager", "username", user.login)
 
         if (purchasePayload.products.isEmpty()) {
@@ -74,8 +74,8 @@ class PurchaseController {
                @RequestBody purchaseUpdate: PurchaseRepresentation): ResponseEntity<*> {
         val currentPurchase = purchaseRepository.findById(id)
                 .orElseThrow { ResourceNotFoundException("Purchase", "id", id) }
-        when {
-            user.role == UserRole.MANAGER -> {
+        when (user.role) {
+            UserRole.MANAGER -> {
                 if (currentPurchase.manager.user.id != user.id) {
                     return ResponseEntity(ApiResponse(false, "Is not possible for you"), HttpStatus.BAD_REQUEST)
                 }
@@ -84,7 +84,7 @@ class PurchaseController {
                         OrderStatus.CLOSED to true -> {
                             currentPurchase.status = purchaseUpdate.status
                             currentPurchase.isAddedIntoStock = purchaseUpdate.isAddedIntoStock
-                            val manager = managerRepository.findByUser(user)
+                            val manager = managerRepository.findByUserAndDeleted(user, false)
                                     ?: throw ResourceNotFoundException("Manager", "username", user.login)
 
                             val stockDataForSave = stockRepository.findAll().map { it.product to it }.toMap()
@@ -108,9 +108,9 @@ class PurchaseController {
                 purchaseRepository.save(currentPurchase)
                 return ResponseEntity.ok(currentPurchase.representation())
             }
-            user.role == UserRole.ADMINISTRATOR -> {
+            UserRole.ADMINISTRATOR -> {
                 currentPurchase.supplier = purchaseUpdate.supplier
-                currentPurchase.administrator = administratorRepository.findByUser(user)
+                currentPurchase.administrator = administratorRepository.findByUserAndDeleted(user, false)
                         ?: throw ResourceNotFoundException("Administrator", "username", user.login)
                 when (currentPurchase.status to purchaseUpdate.status) {
                     OrderStatus.NEW to OrderStatus.IN_PROGRESS -> currentPurchase.status = purchaseUpdate.status

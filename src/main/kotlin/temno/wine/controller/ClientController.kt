@@ -35,8 +35,8 @@ class ClientController {
 
     @GetMapping("/{login}")
     fun getProfile(@PathVariable login: String, @AuthenticationPrincipal currentUser: User): ResponseEntity<*> {
-        val client = clientRepository.findByUserLogin(login)
-                .orElseThrow { ResourceNotFoundException("User", "username", login) }
+        val client = clientRepository.findByUserLoginAndDeleted(login, false)
+                ?: throw ResourceNotFoundException("User", "username", login)
         if (client.user.id != currentUser.id) {
             return ResponseEntity(ApiResponse(false, "No permission"), HttpStatus.UNAUTHORIZED)
         }
@@ -48,8 +48,8 @@ class ClientController {
             @PathVariable login: String,
             @RequestBody updatedProfile: ClientProfile,
             @AuthenticationPrincipal currentUser: User): ResponseEntity<*> {
-        val client = clientRepository.findByUserLogin(login)
-                .orElseThrow { ResourceNotFoundException("User", "username", login) }
+        val client = clientRepository.findByUserLoginAndDeleted(login, false)
+                ?: throw ResourceNotFoundException("User", "username", login)
         when {
             client.user.id == currentUser.id -> {
                 client.name = updatedProfile.name
@@ -70,6 +70,8 @@ class ClientController {
     @GetMapping("/")
     @PreAuthorize("hasAuthority('MANAGER')")
     fun list(): List<ClientProfile> {
-        return clientRepository.findAll().map { it.representation() }
+        return clientRepository.findByDeleted(false)
+                .orElseThrow { ResourceNotFoundException("Deleted", "deleted", false) }
+                .map { it.representation() }
     }
 }

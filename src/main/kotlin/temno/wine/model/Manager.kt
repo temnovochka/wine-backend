@@ -6,6 +6,7 @@ import javax.persistence.*
 @Table(name = "_manager")
 data class Manager(
         var name: String = "",
+        var deleted: Boolean = false,
 
         @ManyToOne(cascade = [CascadeType.MERGE])
         @JoinColumn(name = "user_id", referencedColumnName = "id")

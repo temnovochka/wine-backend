@@ -38,13 +38,13 @@ class OrderController {
             manager?.id, manager?.user?.login, status, paymentStatus,
             listOfProductItemsRepository.findByOrder_Id(id).map { it.product.name to it.number }.toMap(),
             listOfProductItemsRepository.findByOrder_Id(id).map { it.product.price * it.number }.sum(),
-            client.card)
+            client.card, client.deleted)
 
     @PostMapping("/")
     @PreAuthorize("hasAuthority('CLIENT')")
     fun create(@RequestBody orderPayload: OrderPayload, @AuthenticationPrincipal user: User): ResponseEntity<*> {
-        val client = clientRepository.findByUserLogin(user.login)
-                .orElseThrow { ResourceNotFoundException("User", "username", user.login) }
+        val client = clientRepository.findByUserLoginAndDeleted(user.login, false)
+                ?: throw ResourceNotFoundException("User", "username", user.login)
         if (!client.isConfirmed) {
             return ResponseEntity(ApiResponse(false, "Is not possible for unconfirmed clients"), HttpStatus.BAD_REQUEST)
         }
@@ -84,8 +84,8 @@ class OrderController {
                @RequestBody orderUpdate: OrderRepresentation): ResponseEntity<*> {
         val currentOrder = orderRepository.findById(id)
                 .orElseThrow { ResourceNotFoundException("Order", "id", id) }
-        when {
-            user.role == UserRole.CLIENT -> {
+        when (user.role) {
+            UserRole.CLIENT -> {
                 if (currentOrder.client.user.id != user.id) {
                     return ResponseEntity(ApiResponse(false, "Is not possible for you"), HttpStatus.BAD_REQUEST)
                 }
@@ -95,9 +95,9 @@ class OrderController {
                 orderRepository.save(currentOrder)
                 return ResponseEntity.ok(currentOrder.representation())
             }
-            user.role == UserRole.MANAGER -> {
+            UserRole.MANAGER -> {
                 if (currentOrder.manager?.id != orderUpdate.managerId && orderUpdate.managerId != null) {
-                    val manager = managerRepository.findById(orderUpdate.managerId)
+                    val manager = managerRepository.findByIdAndDeleted(orderUpdate.managerId, false)
                             .orElseThrow { ResourceNotFoundException("Manager", "id", orderUpdate.managerId) }
                     currentOrder.manager = manager
                 }
@@ -132,7 +132,7 @@ class OrderController {
     @PutMapping("/check/{id}")
     fun check(@AuthenticationPrincipal user: User,
               @PathVariable id: Long) {
-        val manager = managerRepository.findByUser(user)
+        val manager = managerRepository.findByUserAndDeleted(user, false)
                 ?: throw ResourceNotFoundException("Manager", "username", user.login)
         val order = orderRepository.findById(id).orElseThrow { ResourceNotFoundException("Order", "order_id", id) }
         val prodInOrder = listOfProductItemsRepository.findByOrder_Id(order.id).map { it.product to it.number }
